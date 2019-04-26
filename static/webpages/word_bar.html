@@ -1,0 +1,94 @@
+<html>
+  <head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <link rel="stylesheet" href="http://harvardpolitics.com/blog/wp-content/themes/hpr/style.css">
+    <style>
+      .bar {
+        fill: #cc0000;
+        opacity: 1;
+      }
+      .bar_hover {
+        fill: #ff6666;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div align="center"><svg></svg>
+      <div style="text-align: center;">
+        <b> Here are some examples of what youth had to say about <u id="quotes-title"></u>:</b>
+        <div id="quotes-list"></div>
+      </div>
+    </div>
+    <script>
+      var margins = {"bottom": 80, "left": 30}
+      var bar_width = 960;
+      var bar_height = 480;
+
+      var svg = d3.select('svg')
+        .attr("width", bar_width + margins.left)
+        .attr("height", bar_height + margins.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margins.left + ")");;
+        
+      var mydata = [
+        { 'label':'Illegal Immi...','category':'Illegal Immigrants/Immigration','count':315,"responses":["The wall","Immigration","Immigration, women's and LGBT rights","Deterioration of the family","Build the wall!!"]}, {'label':'Environment,...','category':'Environment, the','count':154,"responses":["climate change","Climate change","Environment/Energy","Climate Change","Environment"]}, {'label':'Economy','category':'Economy','count':147,"responses":["Econmy","Economy","economy","Economic","The economy is not like it is described in the news and by the current administration. The jobs out there don't pay enough and there are mostly no benefits like insurance, time off or even full time employment."]}, {'label':'Health care','category':'Health care','count':142,"responses":["Healthcare","Health","healthcare","Health care","Long term healthcare for people with disabilities"]}, {'label':'President Tr...','category':'President Trump/ineffective leadership/administration','count':135,"responses":["Getting rid of trump","Our president and the Republicans and their connections to Russia.","Trump being president","The president","Trump"]}, {'label':'Gun control/...','category':'Gun control/Second amendment rights','count': 69,"responses":["Gun Laws","Gun control. We have a crisis dealing with mass shooting","The fact that they are trying to take our guns away","Gun safety/reform","Guns"]}, {'label':'Abortion','category':'Abortion','count': 68,"responses":["Abortion","ABORTION","abortion","Abortion laws","The recent redefining of homicide to not include abortion of babies in utero who are at a term who would survive if they were born prematurely."]}, {'label':'National Sec...','category':'National Security','count': 62,"responses":["Border security","Border Security","border security","National soverign safety of US citizens lives.","National security"]}, {'label':'Racial Issues','category':'Racial Issues','count': 59,"responses":["Racesisem","Racism","Race relations","race relations","Racial tension"]}, {'label':'National Deb...','category':'National Debt/budget deficit','count': 56,"responses":["National Debt","national debt","National debt","Debt","The National Debt"] }
+        ];
+        
+      var x = d3.scaleBand()
+          .range([0, bar_width])
+          .padding(0.4);
+      x.domain(mydata.map(function(d) { return d.label; }));
+
+      var y = d3.scaleLinear()
+          .range([bar_height, 0]);
+      y.domain([0, d3.max(mydata, function(d) { return d.count; })]);
+
+      var barChart = svg.selectAll("rect")
+        .data(mydata)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", function(d) { return x(d.label); })
+        .attr("y", function(d) {
+            return y(d.count);
+        })
+        .attr("height", function(d) {
+            return bar_height - y(d.count);
+        })
+        .attr("width", x.bandwidth()); // hard coded number of bins
+
+      // x-axis
+      svg.append("g")
+        .attr("transform", "translate(0," + bar_height + ")")
+        .call(d3.axisBottom(x))
+        .selectAll("text")
+        .attr("transform", "rotate(270) translate(-10, -8)")
+        .style("text-anchor", "end")
+        .attr("dy", ".35em");
+
+      // y-axis
+      svg.append("g")
+        .call(d3.axisLeft(y));
+
+      function outlist (l) {
+        var quoteslist = ""
+        for (var i = 0; i < l.length; i++) {
+          quoteslist += '<p>"' + l[i] + '"</p>';
+        }
+        console.log(quoteslist)
+        return quoteslist
+      }
+
+      // bottom text
+      svg.selectAll("rect")
+        .on("mouseover", function(d) {
+          svg.selectAll("rect").attr("class", "bar");
+          d3.select(this).attr("class", "bar_hover");
+          d3.select("#quotes-title").text(d.category);
+          d3.select("#quotes-list").html(outlist(d.responses));
+        });
+
+    </script>
+  </body>
+</html>
