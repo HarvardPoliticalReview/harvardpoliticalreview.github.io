@@ -12,15 +12,23 @@
         stroke-width: 1;
       }
 
-      .map-container {
-        margin-left: 0px;
-        margin-top: 0px;
-        float: left;
+      .info-pane {
+        text-align: center;
+        position: absolute;
+        width: 30%;
+        height: 30%;
+        bottom: 180px;
+        right: 80px;
+      }
+
+      .minirowlabel {
+        font-size: 10pt;
       }
 
     </style>
 
     <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="https://d3js.org/topojson.v2.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 
@@ -28,10 +36,15 @@
 
   <body onload="update_map()">
     <div style="width: 100%; height: 100%;">
-      <div id="container" class="map-container" style="width: 70%; height: 100%;">
+      <div id="container" style="width: 70%; height: 100%; float: left; padding: 0px; padding-left: 10px">
         <svg style="width: 100%; height: 100%"></svg>
       </div>
-      <div>BOXERRRRRRRRRRRRRRRrr</div>
+      <div id="colour-legend"></div>
+      <div id="info" class="info-pane">
+        <div><h2>Firearm deaths in the United States by Cause (2017)</h2></div>
+        <div style="font-size: 10pt">The map shows the proportion of firearm deaths that are suicides. Data is from the CDC WONDER database. Darker states have more suicides relative to deaths (<i>note: this does not necessarily mean they have a higher suicide rate overall</i>). Death rates per 100,000 population shown in parantheses.<p></div>
+        <div id="info-text">Hover over a state to see more information</div>
+      </div>
     </div>
 
     <script>
@@ -50,32 +63,76 @@
               
       // Define path generator
       var path = d3.geo.path()
-                  .projection(projection);  
+                  .projection(projection);
 
-      // d3.json("https://d3js.org/us-10m.v1.json", function(error, us) {
-      //   if (error) throw error;
+      d3.json("state-data.json", function(statedata) {
+        d3.json("us-states.json", function(mapdata) {
 
-      //   svg.append("g")
-      //     .selectAll("path")
-      //     .data(topojson.feature(us, us.objects.states).features)
-      //     .enter().append("path")
-      //       .attr("class", "states")
-      //       .attr("d", path);
+          // loop through each state
+          for (var i = 0; i < mapdata.features.length; i++) {
+            // combine data with map geo info
+            var statename = mapdata.features[i].properties.name;
+            mapdata.features[i].properties.firearms = statedata[statename];
+          }
 
-      //   svg.append("path")
-      //       .attr("class", "state-borders")
-      //       .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
-      // });
+          svg.selectAll("path")
+            .data(mapdata.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("class", "state-single")
+            .style("fill", function(d) {
+              // no data on puerto rico
+              if (d.properties['name'] == "Puerto Rico") {
+                return "gray";
+              }
 
-      d3.json("us-states.json", function(mapdata) {
-        svg.selectAll("path")
-          .data(mapdata.features)
-          .enter()
-          .append("path")
-          .attr("d", path)
-          .attr("class", "state-single")
-          .style("fill", function(d) {
-            return "black";
+              var deaths_total = d.properties.firearms['deaths'];
+              var deaths_suicide = d.properties.firearms['sdeaths'];
+              // gray if insufficient data
+              if (deaths_suicide == -1 || deaths_total == -1) {
+                return "gray"
+              }
+              var suicide_perc = deaths_suicide / deaths_total;
+
+              // colour scale
+              var colourscale = d3.scaleLinear()
+                .domain([0, 0.8, 1])
+                .range(["white", "pink", "red"]);
+
+              return colourscale(suicide_perc);
+          }).on("mouseover", function(d) {
+            var sdeaths = d.properties.firearms['sdeaths'];
+            var hdeaths = d.properties.firearms['hdeaths'];
+            var tdeaths = d.properties.firearms['deaths'];
+
+            // what to do on mouse over
+            var infohtml = "";
+            infohtml += "<h3 style='display: inline'>" + d.properties['name'] + "</h3><span style='font-size: 10pt'>, Population " + Number(d.properties.firearms['population']).toLocaleString() + "</span><p>";
+            // start the table and format columns
+            infohtml += "<table style='width: 80%; margin-left: 10%'>";
+            infohtml += "<col align='left' width='65%'>";
+            infohtml += "<col align='right'>";
+            infohtml += "<col align='left' width='10%'>";
+            infohtml += "<tr><td><b>Total Firearm Deaths:</b></td><td>" + tdeaths + ' (' + d.properties.firearms['rate'] + ')</td></tr>';
+            // suicide deaths
+            infohtml += "<tr class='minirowlabel'><td><b style='color: red'>&nbsp&nbsp&nbsp&nbsp&nbsp&nbspSuicides:</b></td><td>";
+            if (sdeaths == -1) {
+              infohtml += "N/A";
+            } else {
+              infohtml += sdeaths + " <span style='color: red'>(" + d.properties.firearms['srate'] + ")</span>";
+            }
+            infohtml += "</td></tr>";
+            // homicide deaths
+            infohtml += "<tr class='minirowlabel' ><td><b style='color: blue'>&nbsp&nbsp&nbsp&nbsp&nbsp&nbspHomicides:</b></td><td>";
+            if (hdeaths == -1) {
+              infohtml += "N/A";
+            } else {
+              infohtml += hdeaths + " <span style='color: blue'>(" + d.properties.firearms['hrate'] + ")<span>";
+            }
+            infohtml += "</td></tr></table>";
+            d3.select("#info-text").html(infohtml);
+          });
         });
       });
 
