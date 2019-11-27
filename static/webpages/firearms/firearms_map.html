@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="http://harvardpolitics.com/blog/wp-content/themes/hpr/style.css">
+    <style>
+
+      path:hover {
+        fill-opacity: 0.5;
+      }
+
+      .state-single {
+        stroke: #fff;
+        stroke-width: 1;
+      }
+
+      .map-container {
+        margin-left: 0px;
+        margin-top: 0px;
+        float: left;
+      }
+
+    </style>
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+  </head>
+
+  <body onload="update_map()">
+    <div style="width: 100%; height: 100%;">
+      <div id="container" class="map-container" style="width: 70%; height: 100%;">
+        <svg style="width: 100%; height: 100%"></svg>
+      </div>
+      <div>BOXERRRRRRRRRRRRRRRrr</div>
+    </div>
+
+    <script>
+      d3.select(window)
+        .on("resize", update_map);
+
+      var svg = d3.select("svg");
+
+      var width = 720;
+      var height = 500;
+
+      // D3 Projection
+      var projection = d3.geo.albersUsa()
+                         .translate([width / 2, height / 2])
+                         .scale([1000]);
+              
+      // Define path generator
+      var path = d3.geo.path()
+                  .projection(projection);  
+
+      // d3.json("https://d3js.org/us-10m.v1.json", function(error, us) {
+      //   if (error) throw error;
+
+      //   svg.append("g")
+      //     .selectAll("path")
+      //     .data(topojson.feature(us, us.objects.states).features)
+      //     .enter().append("path")
+      //       .attr("class", "states")
+      //       .attr("d", path);
+
+      //   svg.append("path")
+      //       .attr("class", "state-borders")
+      //       .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+      // });
+
+      d3.json("us-states.json", function(mapdata) {
+        svg.selectAll("path")
+          .data(mapdata.features)
+          .enter()
+          .append("path")
+          .attr("d", path)
+          .attr("class", "state-single")
+          .style("fill", function(d) {
+            return "black";
+        });
+      });
+
+
+      // update size of choropleth
+      function update_map() {
+        d3.selectAll("path").attr("transform", "scale(" + $("#container").width() / width + ")");
+      }
+
+    </script>
+  </body>
+</html>
