@@ -1,6 +1,6 @@
 <html>
   <head>
-    <link rel="stylesheet" href="http://harvardpolitics.com/blog/wp-content/themes/hpr/style.css">
+    <!-- <link rel="stylesheet" href="http://harvardpolitics.com/blog/wp-content/themes/hpr/style.css"> -->
 
     <style>
 
@@ -90,12 +90,14 @@
         .domain([0, 0.6, 1])
         .range(["white", "pink", "red"]);
 
-      window.onload = update_map;
+      window.onload = function() {
+        update_map();
+      };
     </script>
 
   </head>
 
-  <body onload="update_map()">
+  <body onload="update_map()" style="font-family: Gotham-Book">
     <div style="width: 100%; height: 100%;">
       <div id="container" style="width: 70%; height: 100%; float: left; padding: 0px; padding-left: 30px">
         <svg id="choropleth" style="width: 100%; height: 100%"></svg>
